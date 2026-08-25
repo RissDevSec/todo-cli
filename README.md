@@ -60,7 +60,7 @@ Tasks:
 'Buy groceries' has been deleted.
 
 > exit
-Good Bye!
+Goodbye!
 ```
 
 ## Tech Stack
@@ -72,7 +72,7 @@ Good Bye!
 ```
 todo-cli/
 ├── main.py       # Main application logic
-├── task.txt      # Local storage for tasks (auto-generated, gitignored)
+├── tasks.txt      # Local storage for tasks (auto-generated, gitignored)
 ├── README.md
 └── LICENSE
 ```

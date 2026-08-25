@@ -1,7 +1,7 @@
 import os
 import sys
 
-TASKS_FILE = "task.txt"
+TASKS_FILE = "tasks.txt"
 
 def load_tasks():
     tasks = []
@@ -25,10 +25,11 @@ def list_tasks():
 
 def delete_task(index):
     tasks = load_tasks()
+    if not tasks: return print("There are no tasks yet.")
     try:
         print(f"\'{tasks.pop(int(index) - 1)}\' has been deleted.")
     except IndexError:
-        print("Invalid Task Number")
+        print("Invalid task number.")
     else:
         with open(TASKS_FILE, "w",) as file:
             for task in tasks:
@@ -36,7 +37,7 @@ def delete_task(index):
 
 def main():
     while True:
-        print("=== MENU ===")
+        print("\ntodo-cli — a simple task manager\n")
         print("Commands:")
         print(" add <task>")
         print(" list")
@@ -61,18 +62,17 @@ def main():
                         try:
                             delete_task(int(command[1]))
                         except ValueError:
-                            print("Please enter a valid number")
+                            print("Please enter a valid number.")
                     else:
                         print("Please specify a task number. Usage: delete <index>")
                 case "exit":
-                    print("Good Bye!")
+                    print("Goodbye!")
                     sys.exit()
                 case "help":
                     os.system("clear")
                     break
                 case _:
-                    print("Invalid Command.")
-                    continue
+                    print("Invalid command.")
 
 
 if __name__ == "__main__":
@@ -80,4 +80,4 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         os.system("clear")
-        print("Good Bye!")
+        print("Goodbye!")
