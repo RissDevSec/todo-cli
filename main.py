@@ -27,19 +27,16 @@ def add_task(task):
 def mark_task_done(index):
     tasks = load_tasks()
     if not tasks: return print("There are no tasks yet.")
-    try:
-        if index <= 0: raise IndexError
-        task = tasks[index - 1]
-        if task['done']:
-            task['done'] = False
-            print(f"'{task['task']}' has been marked as not done.")
-        else:
-            task['done'] = True
-            print(f"'{task['task']}' has been marked as done.")
-    except IndexError:
+    if index <= 0 or index > len(tasks):
         return print("Invalid task number.")
+    task = tasks[index - 1]
+    if task['done']:
+        task['done'] = False
+        print(f"'{task['task']}' has been marked as not done.")
     else:
-        save_tasks(tasks)
+        task['done'] = True
+        print(f"'{task['task']}' has been marked as done.")
+    save_tasks(tasks)
 
 
 def list_tasks():
@@ -53,14 +50,11 @@ def list_tasks():
 def delete_task(index):
     tasks = load_tasks()
     if not tasks: return print("There are no tasks yet.")
-    try:
-        if index <= 0: raise IndexError
-        task = tasks.pop(index - 1)['task']
-        print(f"'{task}' has been deleted.")
-    except IndexError:
-        print("Invalid task number.")
-    else:
-        save_tasks(tasks)
+    if index <= 0 or index > len(tasks):
+        return print("Invalid task number.")
+    task = tasks.pop(index - 1)['task']
+    print(f"'{task}' has been deleted.")
+    save_tasks(tasks)
 
 def main():
     while True:
