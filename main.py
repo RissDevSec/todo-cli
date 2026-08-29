@@ -3,6 +3,7 @@ import sys
 import json
 
 TASKS_FILE = "tasks.json"
+PRIORITY = ["high", "medium", "low"]
 
 def load_tasks():
     try:
@@ -15,14 +16,15 @@ def save_tasks(tasks):
     with open(TASKS_FILE, "w") as file:
         json.dump(tasks, file, indent="\t")
 
-def add_task(task):
+def add_task(task, priority = "medium"):
     tasks = load_tasks()
     tasks.append({
         "task": task,
+        "priority": priority,
         "done": False
     })
     save_tasks(tasks)
-    print(f"'{task}' has been added.")
+    print(f"({priority.capitalize()}) '{task}' has been added.")
 
 def mark_task_done(index):
     tasks = load_tasks()
@@ -45,7 +47,9 @@ def list_tasks():
     print("\nTasks:")
     for index, task in enumerate(tasks, start=1): 
         done = "[x]" if task['done'] else "[ ]"
-        print(f"{index}. {done} {task['task']}")
+        priority = f"({task['priority'].capitalize()})"
+        task = task['task']
+        print(f"{index}. {priority:<12}{done} {task}")
 
 def delete_task(index):
     tasks = load_tasks()
@@ -60,7 +64,7 @@ def main():
     while True:
         print("\ntodo-cli — a simple task manager\n")
         print("Commands:")
-        print(" add <task>")
+        print(" add [priority] <task>")
         print(" done <index>")
         print(" list")
         print(" delete <index>")
@@ -74,9 +78,15 @@ def main():
             match command[0].lower():
                 case "add":
                     if len(command) > 1: 
-                        add_task(" ".join(command[1:]))
+                        if command[1].lower() in PRIORITY: 
+                            if len(command) == 2: 
+                                print("Please specify a task. Usage: add (priority: high/medium/low) <task>") 
+                            else:
+                                add_task(" ".join(command[2:]), command[1].lower())
+                        else: 
+                            add_task(" ".join(command[1:]))
                     else:
-                        print("Please specify a task. Usage: add <task>")
+                        print("Please specify a task. Usage: add (priority: high/medium/low) <task>") 
                 case "done":
                     if len(command) > 1:
                         try:
