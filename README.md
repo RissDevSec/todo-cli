@@ -1,4 +1,4 @@
-# To-Do List CLI
+# 📝 To-Do List CLI
 
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue?logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -6,16 +6,17 @@
 
 A simple command-line to-do list manager built with Python. Tasks are stored persistently in a local JSON file, so your list stays intact between sessions.
 
-## Features
+## ✨ Features
 
-- **Add tasks** — quickly add a new task from the command line
-- **List tasks** — view all your tasks with numbered indexing and completion status
-- **Mark tasks as done** — toggle a task's completion status on or off
-- **Delete tasks** — remove a task by its number
-- **Persistent storage** — tasks are saved to a JSON file automatically, no database required
-- **Command-based interface** — simple, git-style commands (`add`, `done`, `list`, `delete`, `help`, `exit`)
+- ➕ **Add tasks** — quickly add a new task from the command line
+- 📋 **List tasks** — view all your tasks with numbered indexing, priority, and completion status
+- ✅ **Mark tasks as done** — toggle a task's completion status on or off
+- 🚦 **Priority levels** — tag tasks as High, Medium, or Low priority (defaults to Medium if unspecified)
+- 🗑️ **Delete tasks** — remove a task by its number
+- 💾 **Persistent storage** — tasks are saved to a JSON file automatically, no database required
+- ⌨️ **Command-based interface** — simple, git-style commands (`add`, `done`, `list`, `delete`, `help`, `exit`)
 
-## Installation
+## 🚀 Installation
 
 1. Clone this repository:
    ```bash
@@ -25,7 +26,7 @@ A simple command-line to-do list manager built with Python. Tasks are stored per
 
 2. No external dependencies required — this project only uses Python's standard library.
 
-## Usage
+## 📖 Usage
 
 Run the app:
 ```bash
@@ -36,7 +37,7 @@ Available commands:
 
 | Command | Description |
 |---|---|
-| `add <task>` | Add a new task |
+| `add [priority] <task>` | Add a new task. Priority is optional (`high`/`medium`/`low`), defaults to `medium` |
 | `done <index>` | Toggle a task's completion status |
 | `list` | Show all tasks |
 | `delete <index>` | Delete a task by its number |
@@ -47,10 +48,10 @@ Available commands:
 
 ```
 > add Buy groceries
-'Buy groceries' has been added.
+(Medium) 'Buy groceries' has been added.
 
-> add Finish Python homework
-'Finish Python homework' has been added.
+> add high Finish Python homework
+(High) 'Finish Python homework' has been added.
 
 > done 2
 'Finish Python homework' has been marked as done.
@@ -58,8 +59,8 @@ Available commands:
 > list
 
 Tasks:
-1. [ ] Buy groceries
-2. [x] Finish Python homework
+1. (Medium)    [ ] Buy groceries
+2. (High)      [x] Finish Python homework
 
 > delete 1
 'Buy groceries' has been deleted.
@@ -68,11 +69,11 @@ Tasks:
 Goodbye!
 ```
 
-## Tech Stack
+## 🛠️ Tech Stack
 
 - Python 3 (standard library only — no external dependencies)
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 todo-cli/
@@ -82,6 +83,6 @@ todo-cli/
 └── LICENSE
 ```
 
-## License
+## 📄 License
 
 This project is licensed under the [MIT License](LICENSE) — feel free to use, modify, and distribute it.
