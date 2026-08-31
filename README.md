@@ -9,7 +9,7 @@ A simple command-line to-do list manager built with Python. Tasks are stored per
 ## ✨ Features
 
 - ➕ **Add tasks** — quickly add a new task from the command line
-- 📋 **List tasks** — view all your tasks with numbered indexing, priority, and completion status
+- 📋 **List tasks** — view tasks automatically grouped and sorted by priority (High → Medium → Low)
 - ✅ **Mark tasks as done** — toggle a task's completion status on or off
 - 🚦 **Priority levels** — tag tasks as High, Medium, or Low priority (defaults to Medium if unspecified)
 - 🗑️ **Delete tasks** — remove a task by its number
@@ -47,27 +47,47 @@ Available commands:
 ### Example
 
 ```
-> add Buy groceries
-(Medium) 'Buy groceries' has been added.
-
 > add high Finish Python homework
 (High) 'Finish Python homework' has been added.
 
-> done 2
-'Finish Python homework' has been marked as done.
+> add high Call client
+(High) 'Call client' has been added.
+
+> add Buy groceries
+(Medium) 'Buy groceries' has been added.
+
+> add Clean house
+(Medium) 'Clean house' has been added.
+
+> add low Organize bookshelf
+(Low) 'Organize bookshelf' has been added.
 
 > list
 
 Tasks:
-1. (Medium)    [ ] Buy groceries
-2. (High)      [x] Finish Python homework
 
-> delete 1
-'Buy groceries' has been deleted.
+HIGH (2)
+1. [ ] Finish Python homework
+2. [ ] Call client
+
+MEDIUM (2)
+3. [ ] Buy groceries
+4. [ ] Clean house
+
+LOW (1)
+5. [ ] Organize bookshelf
+
+> done 3
+'Buy groceries' has been marked as done.
+
+> delete 5
+'Organize bookshelf' has been deleted.
 
 > exit
 Goodbye!
 ```
+
+Note: task numbers refer to their position in the sorted, grouped list — not the order they were originally added. Numbers may shift as priorities change.
 
 ## 🛠️ Tech Stack
 
