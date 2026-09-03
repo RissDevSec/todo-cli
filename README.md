@@ -12,15 +12,16 @@ A simple command-line to-do list manager built with Python. Tasks are stored per
 - 📋 **List tasks** — view tasks automatically grouped and sorted by priority (High → Medium → Low)
 - ✅ **Mark tasks as done** — toggle a task's completion status on or off
 - 🚦 **Priority levels** — tag tasks as High, Medium, or Low priority (defaults to Medium if unspecified)
+- ✏️ **Edit tasks** — update a task's text, priority, or both — even if it's already marked done
 - 🗑️ **Delete tasks** — remove a task by its number
 - 💾 **Persistent storage** — tasks are saved to a JSON file automatically, no database required
-- ⌨️ **Command-based interface** — simple, git-style commands (`add`, `done`, `list`, `delete`, `help`, `exit`)
+- ⌨️ **Command-based interface** — simple, git-style commands (`add`, `done`, `edit`, `list`, `delete`, `help`, `exit`)
 
 ## 🚀 Installation
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/your-username/todo-cli.git
+   git clone https://github.com/RissDevSec/todo-cli.git
    cd todo-cli
    ```
 
@@ -39,6 +40,7 @@ Available commands:
 |---|---|
 | `add [priority] <task>` | Add a new task. Priority is optional (`high`/`medium`/`low`), defaults to `medium` |
 | `done <index>` | Toggle a task's completion status |
+| `edit <index> [priority] [task]` | Update a task's priority, text, or both |
 | `list` | Show all tasks |
 | `delete <index>` | Delete a task by its number |
 | `help` | Show the menu again |
@@ -79,6 +81,24 @@ LOW (1)
 
 > done 3
 'Buy groceries' has been marked as done.
+
+> edit 3 low
+(Low) 'Buy groceries' has been updated.
+
+> list
+
+Tasks:
+
+HIGH (2)
+1. [ ] Finish Python homework
+2. [ ] Call client
+
+MEDIUM (1)
+3. [ ] Clean house
+
+LOW (2)
+4. [x] Buy groceries
+5. [ ] Organize bookshelf
 
 > delete 5
 'Organize bookshelf' has been deleted.
