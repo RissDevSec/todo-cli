@@ -20,7 +20,11 @@ def save_tasks(tasks):
         json.dump(tasks, file, indent="\t")
 
 def get_sorted_tasks(tasks):
-    return sorted(tasks, key=lambda t: PRIORITY_ORDER[t["priority"]])
+    sorted_task = sorted(tasks, key=lambda t: PRIORITY_ORDER[t["priority"]])
+    numbered_tasks = {}
+    for index, task in enumerate(sorted_task, start=1):
+        numbered_tasks[index] = task
+    return numbered_tasks
 
 def find_task_by_id(tasks, task_id):
     for i, task in enumerate(tasks):
@@ -30,9 +34,8 @@ def find_task_by_id(tasks, task_id):
 
 def find_index(tasks, task_choice):
     sorted_tasks = get_sorted_tasks(tasks)
-    if task_choice <= 0 or task_choice > len(sorted_tasks):
-        return None
-    task_id = sorted_tasks[task_choice - 1]["id"]
+    if task_choice not in sorted_tasks: return None
+    task_id = sorted_tasks[task_choice]["id"]
     return find_task_by_id(tasks, task_id)
 
 def resolve_task(task_choice):
@@ -66,14 +69,22 @@ def mark_task_done(task_choice):
     print(f"'{task['task']}' has been marked as {status}.")
     save_tasks(tasks)
 
-def list_tasks():
+def list_tasks(filter_task=None):
     tasks = load_tasks()
     if not tasks: return print("There are no tasks yet.")
     sorted_tasks = get_sorted_tasks(tasks)
-    counts = Counter(task["priority"] for task in sorted_tasks)
+
+    if filter_task in PRIORITY:
+        sorted_tasks = {index: task for index, task in sorted_tasks.items() if task["priority"] == filter_task}
+        if not sorted_tasks: return print(f"There are no tasks with priority '{filter_task}'.")
+    elif filter_task == "done":
+        sorted_tasks = {index: task for index, task in sorted_tasks.items() if task["done"]}
+        if not sorted_tasks: return print("There are no done tasks.")
+
+    counts = Counter(task["priority"] for task in sorted_tasks.values())
     print("\nTasks:")
     current_group = None
-    for index, task in enumerate(sorted_tasks, start=1):
+    for index, task in sorted_tasks.items():
         if task["priority"] != current_group:
             current_group = task["priority"]
             print(f"\n{current_group.upper()} ({counts[current_group]})")
@@ -103,7 +114,7 @@ def main():
         print("Commands:")
         print(" add [priority] <task>")
         print(" done <index>")
-        print(" list")
+        print(" list [priority|done]")
         print(" edit <index> [priority] [task]")
         print(" delete <index>")
         print(" exit")
@@ -134,7 +145,15 @@ def main():
                     else:
                         print("Please specify a task number. Usage: done <index>")
                 case "list":
-                    list_tasks()
+                    if len(command) > 1:
+                        if command[1].lower() in PRIORITY:
+                            list_tasks(command[1].lower())
+                        elif command[1].lower() == "done":
+                            list_tasks(command[1].lower())
+                        else:
+                            print("Invalid filter. Usage: list [priority: high/medium/low] or list done")
+                    else:
+                        list_tasks()
                 case "edit":
                     if len(command) > 2:
                         try:
