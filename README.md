@@ -13,6 +13,7 @@ A simple command-line to-do list manager built with Python. Tasks are stored per
 - ✅ **Mark tasks as done** — toggle a task's completion status on or off
 - 🚦 **Priority levels** — tag tasks as High, Medium, or Low priority (defaults to Medium if unspecified)
 - ✏️ **Edit tasks** — update a task's text, priority, or both — even if it's already marked done
+- 🔍 **Filter tasks** — view only tasks with a specific priority, or only completed tasks
 - 🗑️ **Delete tasks** — remove a task by its number
 - 💾 **Persistent storage** — tasks are saved to a JSON file automatically, no database required
 - ⌨️ **Command-based interface** — simple, git-style commands (`add`, `done`, `edit`, `list`, `delete`, `help`, `exit`)
@@ -41,7 +42,7 @@ Available commands:
 | `add [priority] <task>` | Add a new task. Priority is optional (`high`/`medium`/`low`), defaults to `medium` |
 | `done <index>` | Toggle a task's completion status |
 | `edit <index> [priority] [task]` | Update a task's priority, text, or both |
-| `list` | Show all tasks |
+| `list [priority\|done]` | Show all tasks, or filter by priority (`high`/`medium`/`low`) or `done` status |
 | `delete <index>` | Delete a task by its number |
 | `help` | Show the menu again |
 | `exit` | Quit the app |
@@ -85,7 +86,7 @@ LOW (1)
 > edit 3 low
 (Low) 'Buy groceries' has been updated.
 
-> list
+> list high
 
 Tasks:
 
@@ -93,21 +94,21 @@ HIGH (2)
 1. [ ] Finish Python homework
 2. [ ] Call client
 
-MEDIUM (1)
-3. [ ] Clean house
+> list done
 
-LOW (2)
+Tasks:
+
+LOW (1)
 4. [x] Buy groceries
-5. [ ] Organize bookshelf
 
-> delete 5
-'Organize bookshelf' has been deleted.
+> delete 4
+'Buy groceries' has been deleted.
 
 > exit
 Goodbye!
 ```
 
-Note: task numbers refer to their position in the sorted, grouped list — not the order they were originally added. Numbers may shift as priorities change.
+Note: task numbers refer to their position in the sorted, grouped list — not the order they were originally added, and **not** to their position within a filtered view. A filtered `list` keeps each task's original number (e.g. task `4` stays `4` even if it's the only one shown), so `delete`, `edit`, and `done` always target the correct task regardless of whether the last `list` was filtered.
 
 ## 🛠️ Tech Stack
 
