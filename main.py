@@ -19,6 +19,12 @@ def save_tasks(tasks):
     with open(TASKS_FILE, "w") as file:
         json.dump(tasks, file, indent="\t")
 
+def tasks_exist():
+    tasks = load_tasks()
+    if tasks: return tasks
+    print("There are no tasks yet.")
+    return None
+
 def get_sorted_tasks(tasks):
     sorted_task = sorted(tasks, key=lambda t: PRIORITY_ORDER[t["priority"]])
     numbered_tasks = {}
@@ -38,16 +44,23 @@ def find_index(tasks, task_choice):
     task_id = sorted_tasks[task_choice]["id"]
     return find_task_by_id(tasks, task_id)
 
-def resolve_task(task_choice):
-    tasks = load_tasks()
-    if not tasks: 
-        print("There are no tasks yet.")
-        return None, None
+def resolve_task(tasks, task_choice):
     index = find_index(tasks, task_choice)
-    if index is None: 
+    if index is None:
         print("Invalid task number.")
-        return None, None
-    return tasks, index
+    return index
+
+def group_tasks(tasks, title="Tasks:"):
+    counts = Counter(task["priority"] for task in tasks.values())
+    print(f"\n{title}")
+    current_group = None
+    for index, task in tasks.items():
+        if task["priority"] != current_group:
+            current_group = task["priority"]
+            print(f"\n{current_group.upper()} ({counts[current_group]})")
+
+        done = "[x]" if task["done"] else "[ ]"
+        print(f"{index}. {done} {task['task']}")
 
 def add_task(task, priority="medium"):
     tasks = load_tasks()
@@ -61,8 +74,10 @@ def add_task(task, priority="medium"):
     print(f"({priority.capitalize()}) '{task}' has been added.")
 
 def mark_task_done(task_choice):
-    tasks, index = resolve_task(task_choice)
-    if tasks is None or index is None: return
+    tasks = tasks_exist()
+    if tasks is None: return
+    index = resolve_task(tasks, task_choice)
+    if index is None: return
     task = tasks[index]
     task["done"] = not task["done"]
     status = "done" if task["done"] else "not done"
@@ -70,8 +85,9 @@ def mark_task_done(task_choice):
     save_tasks(tasks)
 
 def list_tasks(filter_task=None):
-    tasks = load_tasks()
-    if not tasks: return print("There are no tasks yet.")
+    tasks = tasks_exist()
+    if tasks is None: return
+
     sorted_tasks = get_sorted_tasks(tasks)
 
     if filter_task in PRIORITY:
@@ -81,20 +97,24 @@ def list_tasks(filter_task=None):
         sorted_tasks = {index: task for index, task in sorted_tasks.items() if task["done"]}
         if not sorted_tasks: return print("There are no done tasks.")
 
-    counts = Counter(task["priority"] for task in sorted_tasks.values())
-    print("\nTasks:")
-    current_group = None
-    for index, task in sorted_tasks.items():
-        if task["priority"] != current_group:
-            current_group = task["priority"]
-            print(f"\n{current_group.upper()} ({counts[current_group]})")
+    group_tasks(sorted_tasks)
 
-        done = "[x]" if task["done"] else "[ ]"
-        print(f"{index}. {done} {task['task']}")
+def search_tasks(keyword):
+    tasks = tasks_exist()
+    if tasks is None: return
+
+    sorted_tasks = get_sorted_tasks(tasks)
+
+    filtered_tasks = {index: task for index, task in sorted_tasks.items() if keyword.lower() in task["task"].lower()}
+    if not filtered_tasks: return print(f"There are no tasks matching '{keyword}'.")
+
+    group_tasks(filtered_tasks, title=f"Tasks matching '{keyword}':")
 
 def edit_task(task_choice, new_priority=None, new_task=None):
-    tasks, index = resolve_task(task_choice)
-    if tasks is None or index is None: return
+    tasks = tasks_exist()
+    if tasks is None: return
+    index = resolve_task(tasks, task_choice)
+    if index is None: return
     task = tasks[index]
     if new_priority: task["priority"] = new_priority
     if new_task: task["task"] = new_task
@@ -102,8 +122,10 @@ def edit_task(task_choice, new_priority=None, new_task=None):
     print(f"({task['priority'].capitalize()}) '{task['task']}' has been updated.")
 
 def delete_task(task_choice):
-    tasks, index = resolve_task(task_choice)
-    if tasks is None or index is None: return
+    tasks = tasks_exist()
+    if tasks is None: return
+    index = resolve_task(tasks, task_choice)
+    if index is None: return
     task = tasks.pop(index)["task"]
     print(f"'{task}' has been deleted.")
     save_tasks(tasks)
@@ -115,6 +137,7 @@ def main():
         print(" add [priority] <task>")
         print(" done <index>")
         print(" list [priority|done]")
+        print(" search <keyword>")
         print(" edit <index> [priority] [task]")
         print(" delete <index>")
         print(" exit")
@@ -154,6 +177,11 @@ def main():
                             print("Invalid filter. Usage: list [priority: high/medium/low] or list done")
                     else:
                         list_tasks()
+                case "search":
+                    if len(command) > 1:
+                        search_tasks(" ".join(command[1:]))
+                    else:
+                        print("Please specify a keyword. Usage: search <keyword>")
                 case "edit":
                     if len(command) > 2:
                         try:
