@@ -14,9 +14,10 @@ A simple command-line to-do list manager built with Python. Tasks are stored per
 - 🚦 **Priority levels** — tag tasks as High, Medium, or Low priority (defaults to Medium if unspecified)
 - ✏️ **Edit tasks** — update a task's text, priority, or both — even if it's already marked done
 - 🔍 **Filter tasks** — view only tasks with a specific priority, or only completed tasks
+- 🔎 **Search tasks** — find tasks by keyword, matched anywhere in the task text (case-insensitive)
 - 🗑️ **Delete tasks** — remove a task by its number
 - 💾 **Persistent storage** — tasks are saved to a JSON file automatically, no database required
-- ⌨️ **Command-based interface** — simple, git-style commands (`add`, `done`, `edit`, `list`, `delete`, `help`, `exit`)
+- ⌨️ **Command-based interface** — simple, git-style commands (`add`, `done`, `edit`, `list`, `search`, `delete`, `help`, `exit`)
 
 ## 🚀 Installation
 
@@ -43,6 +44,7 @@ Available commands:
 | `done <index>` | Toggle a task's completion status |
 | `edit <index> [priority] [task]` | Update a task's priority, text, or both |
 | `list [priority\|done]` | Show all tasks, or filter by priority (`high`/`medium`/`low`) or `done` status |
+| `search <keyword>` | Find tasks whose text contains the keyword (case-insensitive) |
 | `delete <index>` | Delete a task by its number |
 | `help` | Show the menu again |
 | `exit` | Quit the app |
@@ -53,14 +55,8 @@ Available commands:
 > add high Finish Python homework
 (High) 'Finish Python homework' has been added.
 
-> add high Call client
-(High) 'Call client' has been added.
-
-> add Buy groceries
-(Medium) 'Buy groceries' has been added.
-
-> add Clean house
-(Medium) 'Clean house' has been added.
+> add Buy milk and eggs
+(Medium) 'Buy milk and eggs' has been added.
 
 > add low Organize bookshelf
 (Low) 'Organize bookshelf' has been added.
@@ -69,46 +65,36 @@ Available commands:
 
 Tasks:
 
-HIGH (2)
+HIGH (1)
 1. [ ] Finish Python homework
-2. [ ] Call client
 
-MEDIUM (2)
-3. [ ] Buy groceries
-4. [ ] Clean house
+MEDIUM (1)
+2. [ ] Buy milk and eggs
 
 LOW (1)
-5. [ ] Organize bookshelf
+3. [ ] Organize bookshelf
 
-> done 3
-'Buy groceries' has been marked as done.
+> search milk
 
-> edit 3 low
-(Low) 'Buy groceries' has been updated.
+Tasks matching 'milk':
 
-> list high
+MEDIUM (1)
+2. [ ] Buy milk and eggs
 
-Tasks:
+> search xyz
+There are no tasks matching 'xyz'.
 
-HIGH (2)
-1. [ ] Finish Python homework
-2. [ ] Call client
+> done 2
+'Buy milk and eggs' has been marked as done.
 
-> list done
-
-Tasks:
-
-LOW (1)
-4. [x] Buy groceries
-
-> delete 4
-'Buy groceries' has been deleted.
+> delete 3
+'Organize bookshelf' has been deleted.
 
 > exit
 Goodbye!
 ```
 
-Note: task numbers refer to their position in the sorted, grouped list — not the order they were originally added, and **not** to their position within a filtered view. A filtered `list` keeps each task's original number (e.g. task `4` stays `4` even if it's the only one shown), so `delete`, `edit`, and `done` always target the correct task regardless of whether the last `list` was filtered.
+Note: task numbers refer to their position in the sorted, grouped list — not the order they were originally added. Both filtering (`list`) and searching keep each task's original number rather than renumbering from 1, so `delete`, `edit`, and `done` always target the correct task. Numbers may shift whenever a task's priority changes, since that changes its position in the sorted list — always run `list` again after an edit to confirm current numbering before acting on it.
 
 ## 🛠️ Tech Stack
 
