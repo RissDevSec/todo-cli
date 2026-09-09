@@ -50,6 +50,13 @@ def resolve_task(tasks, task_choice):
         print("Invalid task number.")
     return index
 
+def filter_tasks(tasks, filter_criteria):
+    if filter_criteria in PRIORITY:
+        return {index: task for index, task in tasks.items() if task["priority"] == filter_criteria}
+    elif filter_criteria == "done":
+        return {index: task for index, task in tasks.items() if task["done"]}
+    return tasks
+
 def group_tasks(tasks, title="Tasks:"):
     counts = Counter(task["priority"] for task in tasks.values())
     print(f"\n{title}")
@@ -84,31 +91,47 @@ def mark_task_done(task_choice):
     print(f"'{task['task']}' has been marked as {status}.")
     save_tasks(tasks)
 
-def list_tasks(filter_task=None):
+def list_tasks(filter_criteria=None):
     tasks = tasks_exist()
     if tasks is None: return
 
     sorted_tasks = get_sorted_tasks(tasks)
+    filtered_tasks = filter_tasks(sorted_tasks, filter_criteria)
 
-    if filter_task in PRIORITY:
-        sorted_tasks = {index: task for index, task in sorted_tasks.items() if task["priority"] == filter_task}
-        if not sorted_tasks: return print(f"There are no tasks with priority '{filter_task}'.")
-    elif filter_task == "done":
-        sorted_tasks = {index: task for index, task in sorted_tasks.items() if task["done"]}
-        if not sorted_tasks: return print("There are no done tasks.")
+    if not filtered_tasks:
+        if filter_criteria == "done":
+            print("There are no done tasks.")
+        elif filter_criteria in PRIORITY:
+            print(f"There are no tasks with priority '{filter_criteria}'.")
+        return
 
-    group_tasks(sorted_tasks)
+    group_tasks(filtered_tasks)
 
-def search_tasks(keyword):
+def search_tasks(keyword, filter_criteria=None):
     tasks = tasks_exist()
     if tasks is None: return
 
     sorted_tasks = get_sorted_tasks(tasks)
+    keyword_matches = {
+        index: task for index, task in sorted_tasks.items()
+        if keyword.lower() in task["task"].lower()
+    }
+    filtered_tasks = filter_tasks(keyword_matches, filter_criteria)
 
-    filtered_tasks = {index: task for index, task in sorted_tasks.items() if keyword.lower() in task["task"].lower()}
-    if not filtered_tasks: return print(f"There are no tasks matching '{keyword}'.")
+    if not filtered_tasks:
+        if filter_criteria == "done":
+            print(f"There are no done tasks matching '{keyword}'.")
+        elif filter_criteria in PRIORITY:
+            print(f"There are no tasks matching '{keyword}' with priority '{filter_criteria}'.")
+        else:
+            print(f"There are no tasks matching '{keyword}'.")
+        return
 
-    group_tasks(filtered_tasks, title=f"Tasks matching '{keyword}':")
+    title = f"Tasks matching '{keyword}'"
+    if filter_criteria:
+        title += f" ({filter_criteria})"
+    title += ":"
+    group_tasks(filtered_tasks, title=title)
 
 def edit_task(task_choice, new_priority=None, new_task=None):
     tasks = tasks_exist()
@@ -137,7 +160,7 @@ def main():
         print(" add [priority] <task>")
         print(" done <index>")
         print(" list [priority|done]")
-        print(" search <keyword>")
+        print(" search [priority|done] <keyword>")
         print(" edit <index> [priority] [task]")
         print(" delete <index>")
         print(" exit")
@@ -169,19 +192,25 @@ def main():
                         print("Please specify a task number. Usage: done <index>")
                 case "list":
                     if len(command) > 1:
-                        if command[1].lower() in PRIORITY:
-                            list_tasks(command[1].lower())
-                        elif command[1].lower() == "done":
-                            list_tasks(command[1].lower())
+                        command_lower = command[1].lower()
+                        if command_lower in PRIORITY or command_lower == "done":
+                            list_tasks(command_lower)
                         else:
                             print("Invalid filter. Usage: list [priority: high/medium/low] or list done")
                     else:
                         list_tasks()
                 case "search":
                     if len(command) > 1:
-                        search_tasks(" ".join(command[1:]))
+                        command_lower = command[1].lower()
+                        if command_lower in PRIORITY or command_lower == "done":
+                            if len(command) == 2:
+                                print("Please specify a keyword. Usage: search (priority: high/medium/low|done) <keyword>")
+                            else:
+                                search_tasks(" ".join(command[2:]), command_lower)
+                        else:
+                            search_tasks(" ".join(command[1:]))
                     else:
-                        print("Please specify a keyword. Usage: search <keyword>")
+                        print("Please specify a keyword. Usage: search [priority] <keyword>")
                 case "edit":
                     if len(command) > 2:
                         try:
