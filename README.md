@@ -14,7 +14,7 @@ A simple command-line to-do list manager built with Python. Tasks are stored per
 - 🚦 **Priority levels** — tag tasks as High, Medium, or Low priority (defaults to Medium if unspecified)
 - ✏️ **Edit tasks** — update a task's text, priority, or both — even if it's already marked done
 - 🔍 **Filter tasks** — view only tasks with a specific priority, or only completed tasks
-- 🔎 **Search tasks** — find tasks by keyword, matched anywhere in the task text (case-insensitive)
+- 🔎 **Search tasks** — find tasks by keyword (case-insensitive), optionally narrowed down further by priority or done status
 - 🗑️ **Delete tasks** — remove a task by its number
 - 💾 **Persistent storage** — tasks are saved to a JSON file automatically, no database required
 - ⌨️ **Command-based interface** — simple, git-style commands (`add`, `done`, `edit`, `list`, `search`, `delete`, `help`, `exit`)
@@ -44,7 +44,7 @@ Available commands:
 | `done <index>` | Toggle a task's completion status |
 | `edit <index> [priority] [task]` | Update a task's priority, text, or both |
 | `list [priority\|done]` | Show all tasks, or filter by priority (`high`/`medium`/`low`) or `done` status |
-| `search <keyword>` | Find tasks whose text contains the keyword (case-insensitive) |
+| `search [priority\|done] <keyword>` | Find tasks whose text contains the keyword. Optionally narrow the results by priority or `done` status |
 | `delete <index>` | Delete a task by its number |
 | `help` | Show the menu again |
 | `exit` | Quit the app |
@@ -55,46 +55,53 @@ Available commands:
 > add high Finish Python homework
 (High) 'Finish Python homework' has been added.
 
-> add Buy milk and eggs
-(Medium) 'Buy milk and eggs' has been added.
+> add high Buy milk and eggs
+(High) 'Buy milk and eggs' has been added.
 
-> add low Organize bookshelf
-(Low) 'Organize bookshelf' has been added.
+> add Buy bread
+(Medium) 'Buy bread' has been added.
 
 > list
 
 Tasks:
 
-HIGH (1)
+HIGH (2)
 1. [ ] Finish Python homework
-
-MEDIUM (1)
 2. [ ] Buy milk and eggs
 
-LOW (1)
-3. [ ] Organize bookshelf
+MEDIUM (1)
+3. [ ] Buy bread
 
 > search milk
 
 Tasks matching 'milk':
 
-MEDIUM (1)
+HIGH (1)
 2. [ ] Buy milk and eggs
 
-> search xyz
-There are no tasks matching 'xyz'.
+> search high milk
+
+Tasks matching 'milk' (high):
+
+HIGH (1)
+2. [ ] Buy milk and eggs
+
+> search high bread
+There are no tasks matching 'bread' with priority 'high'.
 
 > done 2
 'Buy milk and eggs' has been marked as done.
 
 > delete 3
-'Organize bookshelf' has been deleted.
+'Buy bread' has been deleted.
 
 > exit
 Goodbye!
 ```
 
-Note: task numbers refer to their position in the sorted, grouped list — not the order they were originally added. Both filtering (`list`) and searching keep each task's original number rather than renumbering from 1, so `delete`, `edit`, and `done` always target the correct task. Numbers may shift whenever a task's priority changes, since that changes its position in the sorted list — always run `list` again after an edit to confirm current numbering before acting on it.
+Note: task numbers refer to their position in the sorted, grouped list — not the order they were originally added. Filtering and searching (with or without a priority) keep each task's original number rather than renumbering from 1, so `delete`, `edit`, and `done` always target the correct task. Numbers may shift whenever a task's priority changes, since that changes its position in the sorted list — always run `list` again after an edit to confirm current numbering before acting on it.
+
+**A note on `search [priority|done] <keyword>`:** because the priority/`done` word is optional and comes first, a single-word search that happens to match a priority name or `done` (e.g. `search high`) is interpreted as "filter by that with no keyword" and will prompt for a keyword, rather than searching for the literal word. If you need to search for a task containing a word like "high" as part of a longer phrase, include more of the phrase (e.g. `search high quality paper`).
 
 ## 🛠️ Tech Stack
 
