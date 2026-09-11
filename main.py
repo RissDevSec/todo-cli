@@ -3,6 +3,7 @@ import sys
 import json
 from collections import Counter
 import uuid
+from datetime import datetime
 
 TASKS_FILE = "tasks.json"
 PRIORITY = ["high", "medium", "low"]
@@ -57,6 +58,13 @@ def filter_tasks(tasks, filter_criteria):
         return {index: task for index, task in tasks.items() if task["done"]}
     return tasks
 
+def format_due_date(due_date_str, is_done):
+    if not due_date_str: return ""
+    task_date = datetime.fromisoformat(due_date_str).date()
+    today = datetime.today().date()
+    overdue = " OVERDUE" if task_date < today and not is_done else ""
+    return f"- due: {due_date_str}{overdue}"
+
 def group_tasks(tasks, title="Tasks:"):
     counts = Counter(task["priority"] for task in tasks.values())
     print(f"\n{title}")
@@ -66,8 +74,9 @@ def group_tasks(tasks, title="Tasks:"):
             current_group = task["priority"]
             print(f"\n{current_group.upper()} ({counts[current_group]})")
 
-        done = "[x]" if task["done"] else "[ ]"
-        print(f"{index}. {done} {task['task']}")
+        done_marker = "[x]" if task["done"] else "[ ]"
+        due_display = format_due_date(task.get("due_date"), task["done"])
+        print(f"{index}. {done_marker} {task['task']} {due_display}".rstrip())
 
 def add_task(task, priority="medium"):
     tasks = load_tasks()
@@ -75,10 +84,39 @@ def add_task(task, priority="medium"):
         "id": str(uuid.uuid4()),
         "task": task,
         "priority": priority,
-        "done": False
+        "done": False,
+        "due_date": None,
     })
     save_tasks(tasks)
     print(f"({priority.capitalize()}) '{task}' has been added.")
+
+def set_due_date(task_choice, date_str):
+    tasks = tasks_exist()
+    if tasks is None: return
+    index = resolve_task(tasks, task_choice)
+    if index is None: return
+    task = tasks[index]
+    try:
+        parsed_date = datetime.strptime(date_str, "%Y-%m-%d")
+    except ValueError:
+        print("Invalid date format. Please use YYYY-MM-DD (e.g. 2026-12-31).")
+        return
+    task["due_date"] = parsed_date.date().isoformat()
+    save_tasks(tasks)
+    print(f"'{task['task']}' is now due on {task['due_date']}.")
+
+def remove_due_date(task_choice):
+    tasks = tasks_exist()
+    if tasks is None: return
+    index = resolve_task(tasks, task_choice)
+    if index is None: return
+    task = tasks[index]
+    if task.get("due_date") is None:
+        print("This task has no due date to remove.")
+        return
+    task["due_date"] = None
+    save_tasks(tasks)
+    print(f"Due date for '{task['task']}' has been removed.")
 
 def mark_task_done(task_choice):
     tasks = tasks_exist()
@@ -153,95 +191,124 @@ def delete_task(task_choice):
     print(f"'{task}' has been deleted.")
     save_tasks(tasks)
 
+def show_menu():
+    print("\ntodo-cli — a simple task manager\n")
+    print("Commands:")
+    print("  add [priority] <task>")
+    print("  due <index> <date>")
+    print("  due delete <index>")
+    print("  done <index>")
+    print("  list [priority|done]")
+    print("  search [priority|done] <keyword>")
+    print("  edit <index> [priority] [task]")
+    print("  delete <index>")
+    print("  help")
+    print("  exit")
+
 def main():
+    show_menu()
     while True:
-        print("\ntodo-cli — a simple task manager\n")
-        print("Commands:")
-        print(" add [priority] <task>")
-        print(" done <index>")
-        print(" list [priority|done]")
-        print(" search [priority|done] <keyword>")
-        print(" edit <index> [priority] [task]")
-        print(" delete <index>")
-        print(" exit")
-        print(" help")
+        command = input("\n> ").strip().split()
+        if not command:
+            continue
 
-        while True:
-            command = input("\n> ").strip().split()
-            if not command: continue
-
-            match command[0].lower():
-                case "add":
-                    if len(command) > 1:
-                        if command[1].lower() in PRIORITY:
-                            if len(command) == 2:
-                                print("Please specify a task. Usage: add (priority: high/medium/low) <task>")
-                            else:
-                                add_task(" ".join(command[2:]), command[1].lower())
+        match command[0].lower():
+            case "add":
+                if len(command) > 1:
+                    if command[1].lower() in PRIORITY:
+                        if len(command) == 2:
+                            print("Please specify a task. Usage: add (priority: high/medium/low) <task>")
                         else:
-                            add_task(" ".join(command[1:]))
+                            add_task(" ".join(command[2:]), command[1].lower())
                     else:
-                        print("Please specify a task. Usage: add (priority: high/medium/low) <task>")
-                case "done":
-                    if len(command) > 1:
+                        add_task(" ".join(command[1:]))
+                else:
+                    print("Please specify a task. Usage: add (priority: high/medium/low) <task>")
+
+            case "due":
+                if len(command) == 3:
+                    if command[1].lower() == "delete":
                         try:
-                            mark_task_done(int(command[1]))
+                            remove_due_date(int(command[2]))
                         except ValueError:
-                            print("Please enter a valid number.")
+                            print("Please enter a valid task number. Usage: due delete <index>")
                     else:
-                        print("Please specify a task number. Usage: done <index>")
-                case "list":
-                    if len(command) > 1:
-                        command_lower = command[1].lower()
-                        if command_lower in PRIORITY or command_lower == "done":
-                            list_tasks(command_lower)
-                        else:
-                            print("Invalid filter. Usage: list [priority: high/medium/low] or list done")
-                    else:
-                        list_tasks()
-                case "search":
-                    if len(command) > 1:
-                        command_lower = command[1].lower()
-                        if command_lower in PRIORITY or command_lower == "done":
-                            if len(command) == 2:
-                                print("Please specify a keyword. Usage: search (priority: high/medium/low|done) <keyword>")
-                            else:
-                                search_tasks(" ".join(command[2:]), command_lower)
-                        else:
-                            search_tasks(" ".join(command[1:]))
-                    else:
-                        print("Please specify a keyword. Usage: search [priority] <keyword>")
-                case "edit":
-                    if len(command) > 2:
                         try:
                             task_choice = int(command[1])
-                            if command[2].lower() in PRIORITY:
-                                if len(command) == 3:
-                                    edit_task(task_choice, command[2].lower())
-                                else:
-                                    edit_task(task_choice, command[2].lower(), " ".join(command[3:]))     
+                        except ValueError:
+                            print("Please enter a valid task number. Usage: due <index> <YYYY-MM-DD>")
+                        else:
+                            set_due_date(task_choice, command[2])
+                else:
+                    print("Usage: due <index> <YYYY-MM-DD>  |  due delete <index>")
+
+            case "done":
+                if len(command) > 1:
+                    try:
+                        mark_task_done(int(command[1]))
+                    except ValueError:
+                        print("Please enter a valid number.")
+                else:
+                    print("Please specify a task number. Usage: done <index>")
+
+            case "list":
+                if len(command) > 1:
+                    command_lower = command[1].lower()
+                    if command_lower in PRIORITY or command_lower == "done":
+                        list_tasks(command_lower)
+                    else:
+                        print("Invalid filter. Usage: list [priority: high/medium/low] or list done")
+                else:
+                    list_tasks()
+
+            case "search":
+                if len(command) > 1:
+                    command_lower = command[1].lower()
+                    if command_lower in PRIORITY or command_lower == "done":
+                        if len(command) == 2:
+                            print("Please specify a keyword. Usage: search (priority: high/medium/low|done) <keyword>")
+                        else:
+                            search_tasks(" ".join(command[2:]), command_lower)
+                    else:
+                        search_tasks(" ".join(command[1:]))
+                else:
+                    print("Please specify a keyword. Usage: search [priority] <keyword>")
+
+            case "edit":
+                if len(command) > 2:
+                    try:
+                        task_choice = int(command[1])
+                        if command[2].lower() in PRIORITY:
+                            if len(command) == 3:
+                                edit_task(task_choice, command[2].lower())
                             else:
-                                edit_task(task_choice, new_task=" ".join(command[2:]))
-                        except ValueError:
-                            print("Please enter a valid number.")
-                    else:
-                        print("Please specify a task number. Usage: edit <index> (priority: high/medium/low) [task]")
-                case "delete":
-                    if len(command) > 1:
-                        try:
-                            delete_task(int(command[1]))
-                        except ValueError:
-                            print("Please enter a valid number.")
-                    else:
-                        print("Please specify a task number. Usage: delete <index>")
-                case "exit":
-                    print("Goodbye!")
-                    sys.exit()
-                case "help":
-                    os.system("clear")
-                    break
-                case _:
-                    print("Invalid command.")
+                                edit_task(task_choice, command[2].lower(), " ".join(command[3:]))
+                        else:
+                            edit_task(task_choice, new_task=" ".join(command[2:]))
+                    except ValueError:
+                        print("Please enter a valid number.")
+                else:
+                    print("Please specify a task number. Usage: edit <index> (priority: high/medium/low) [task]")
+
+            case "delete":
+                if len(command) > 1:
+                    try:
+                        delete_task(int(command[1]))
+                    except ValueError:
+                        print("Please enter a valid number.")
+                else:
+                    print("Please specify a task number. Usage: delete <index>")
+
+            case "help":
+                os.system("clear")
+                show_menu()
+
+            case "exit":
+                print("Goodbye!")
+                sys.exit()
+
+            case _:
+                print("Invalid command.")
 
 
 if __name__ == "__main__":
