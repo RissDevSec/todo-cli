@@ -1,195 +1,6 @@
 import os
 import sys
-import json
-from collections import Counter
-import uuid
-from datetime import datetime
-
-TASKS_FILE = "tasks.json"
-PRIORITY = ["high", "medium", "low"]
-PRIORITY_ORDER = {"high": 0, "medium": 1, "low": 2}
-
-def load_tasks():
-    try:
-        with open(TASKS_FILE, "r") as file:
-            return json.load(file)
-    except (FileNotFoundError, json.decoder.JSONDecodeError):
-        return []
-
-def save_tasks(tasks):
-    with open(TASKS_FILE, "w") as file:
-        json.dump(tasks, file, indent="\t")
-
-def tasks_exist():
-    tasks = load_tasks()
-    if tasks: return tasks
-    print("There are no tasks yet.")
-    return None
-
-def get_sorted_tasks(tasks):
-    sorted_task = sorted(tasks, key=lambda t: PRIORITY_ORDER[t["priority"]])
-    numbered_tasks = {}
-    for index, task in enumerate(sorted_task, start=1):
-        numbered_tasks[index] = task
-    return numbered_tasks
-
-def find_task_by_id(tasks, task_id):
-    for i, task in enumerate(tasks):
-        if task["id"] == task_id:
-            return i
-    return None
-
-def find_index(tasks, task_choice):
-    sorted_tasks = get_sorted_tasks(tasks)
-    if task_choice not in sorted_tasks: return None
-    task_id = sorted_tasks[task_choice]["id"]
-    return find_task_by_id(tasks, task_id)
-
-def resolve_task(tasks, task_choice):
-    index = find_index(tasks, task_choice)
-    if index is None:
-        print("Invalid task number.")
-    return index
-
-def filter_tasks(tasks, filter_criteria):
-    if filter_criteria in PRIORITY:
-        return {index: task for index, task in tasks.items() if task["priority"] == filter_criteria}
-    elif filter_criteria == "done":
-        return {index: task for index, task in tasks.items() if task["done"]}
-    return tasks
-
-def format_due_date(due_date_str, is_done):
-    if not due_date_str: return ""
-    task_date = datetime.fromisoformat(due_date_str).date()
-    today = datetime.today().date()
-    overdue = " OVERDUE" if task_date < today and not is_done else ""
-    return f"- due: {due_date_str}{overdue}"
-
-def group_tasks(tasks, title="Tasks:"):
-    counts = Counter(task["priority"] for task in tasks.values())
-    print(f"\n{title}")
-    current_group = None
-    for index, task in tasks.items():
-        if task["priority"] != current_group:
-            current_group = task["priority"]
-            print(f"\n{current_group.upper()} ({counts[current_group]})")
-
-        done_marker = "[x]" if task["done"] else "[ ]"
-        due_display = format_due_date(task.get("due_date"), task["done"])
-        print(f"{index}. {done_marker} {task['task']} {due_display}".rstrip())
-
-def add_task(task, priority="medium"):
-    tasks = load_tasks()
-    tasks.append({
-        "id": str(uuid.uuid4()),
-        "task": task,
-        "priority": priority,
-        "done": False,
-        "due_date": None,
-    })
-    save_tasks(tasks)
-    print(f"({priority.capitalize()}) '{task}' has been added.")
-
-def set_due_date(task_choice, date_str):
-    tasks = tasks_exist()
-    if tasks is None: return
-    index = resolve_task(tasks, task_choice)
-    if index is None: return
-    task = tasks[index]
-    try:
-        parsed_date = datetime.strptime(date_str, "%Y-%m-%d")
-    except ValueError:
-        print("Invalid date format. Please use YYYY-MM-DD (e.g. 2026-12-31).")
-        return
-    task["due_date"] = parsed_date.date().isoformat()
-    save_tasks(tasks)
-    print(f"'{task['task']}' is now due on {task['due_date']}.")
-
-def remove_due_date(task_choice):
-    tasks = tasks_exist()
-    if tasks is None: return
-    index = resolve_task(tasks, task_choice)
-    if index is None: return
-    task = tasks[index]
-    if task.get("due_date") is None:
-        print("This task has no due date to remove.")
-        return
-    task["due_date"] = None
-    save_tasks(tasks)
-    print(f"Due date for '{task['task']}' has been removed.")
-
-def mark_task_done(task_choice):
-    tasks = tasks_exist()
-    if tasks is None: return
-    index = resolve_task(tasks, task_choice)
-    if index is None: return
-    task = tasks[index]
-    task["done"] = not task["done"]
-    status = "done" if task["done"] else "not done"
-    print(f"'{task['task']}' has been marked as {status}.")
-    save_tasks(tasks)
-
-def list_tasks(filter_criteria=None):
-    tasks = tasks_exist()
-    if tasks is None: return
-
-    sorted_tasks = get_sorted_tasks(tasks)
-    filtered_tasks = filter_tasks(sorted_tasks, filter_criteria)
-
-    if not filtered_tasks:
-        if filter_criteria == "done":
-            print("There are no done tasks.")
-        elif filter_criteria in PRIORITY:
-            print(f"There are no tasks with priority '{filter_criteria}'.")
-        return
-
-    group_tasks(filtered_tasks)
-
-def search_tasks(keyword, filter_criteria=None):
-    tasks = tasks_exist()
-    if tasks is None: return
-
-    sorted_tasks = get_sorted_tasks(tasks)
-    keyword_matches = {
-        index: task for index, task in sorted_tasks.items()
-        if keyword.lower() in task["task"].lower()
-    }
-    filtered_tasks = filter_tasks(keyword_matches, filter_criteria)
-
-    if not filtered_tasks:
-        if filter_criteria == "done":
-            print(f"There are no done tasks matching '{keyword}'.")
-        elif filter_criteria in PRIORITY:
-            print(f"There are no tasks matching '{keyword}' with priority '{filter_criteria}'.")
-        else:
-            print(f"There are no tasks matching '{keyword}'.")
-        return
-
-    title = f"Tasks matching '{keyword}'"
-    if filter_criteria:
-        title += f" ({filter_criteria})"
-    title += ":"
-    group_tasks(filtered_tasks, title=title)
-
-def edit_task(task_choice, new_priority=None, new_task=None):
-    tasks = tasks_exist()
-    if tasks is None: return
-    index = resolve_task(tasks, task_choice)
-    if index is None: return
-    task = tasks[index]
-    if new_priority: task["priority"] = new_priority
-    if new_task: task["task"] = new_task
-    save_tasks(tasks)
-    print(f"({task['priority'].capitalize()}) '{task['task']}' has been updated.")
-
-def delete_task(task_choice):
-    tasks = tasks_exist()
-    if tasks is None: return
-    index = resolve_task(tasks, task_choice)
-    if index is None: return
-    task = tasks.pop(index)["task"]
-    print(f"'{task}' has been deleted.")
-    save_tasks(tasks)
+import modules.tasks as tasks
 
 def show_menu():
     print("\ntodo-cli — a simple task manager\n")
@@ -215,13 +26,13 @@ def main():
         match command[0].lower():
             case "add":
                 if len(command) > 1:
-                    if command[1].lower() in PRIORITY:
+                    if command[1].lower() in tasks.PRIORITY:
                         if len(command) == 2:
                             print("Please specify a task. Usage: add (priority: high/medium/low) <task>")
                         else:
-                            add_task(" ".join(command[2:]), command[1].lower())
+                            tasks.add_task(" ".join(command[2:]), command[1].lower())
                     else:
-                        add_task(" ".join(command[1:]))
+                        tasks.add_task(" ".join(command[1:]))
                 else:
                     print("Please specify a task. Usage: add (priority: high/medium/low) <task>")
 
@@ -229,7 +40,7 @@ def main():
                 if len(command) == 3:
                     if command[1].lower() == "delete":
                         try:
-                            remove_due_date(int(command[2]))
+                            tasks.remove_due_date(int(command[2]))
                         except ValueError:
                             print("Please enter a valid task number. Usage: due delete <index>")
                     else:
@@ -238,14 +49,14 @@ def main():
                         except ValueError:
                             print("Please enter a valid task number. Usage: due <index> <YYYY-MM-DD>")
                         else:
-                            set_due_date(task_choice, command[2])
+                            tasks.set_due_date(task_choice, command[2])
                 else:
                     print("Usage: due <index> <YYYY-MM-DD>  |  due delete <index>")
 
             case "done":
                 if len(command) > 1:
                     try:
-                        mark_task_done(int(command[1]))
+                        tasks.mark_task_done(int(command[1]))
                     except ValueError:
                         print("Please enter a valid number.")
                 else:
@@ -254,23 +65,23 @@ def main():
             case "list":
                 if len(command) > 1:
                     command_lower = command[1].lower()
-                    if command_lower in PRIORITY or command_lower == "done":
-                        list_tasks(command_lower)
+                    if command_lower in tasks.PRIORITY or command_lower == "done":
+                        tasks.list_tasks(command_lower)
                     else:
                         print("Invalid filter. Usage: list [priority: high/medium/low] or list done")
                 else:
-                    list_tasks()
+                    tasks.list_tasks()
 
             case "search":
                 if len(command) > 1:
                     command_lower = command[1].lower()
-                    if command_lower in PRIORITY or command_lower == "done":
+                    if command_lower in tasks.PRIORITY or command_lower == "done":
                         if len(command) == 2:
                             print("Please specify a keyword. Usage: search (priority: high/medium/low|done) <keyword>")
                         else:
-                            search_tasks(" ".join(command[2:]), command_lower)
+                            tasks.search_tasks(" ".join(command[2:]), command_lower)
                     else:
-                        search_tasks(" ".join(command[1:]))
+                        tasks.search_tasks(" ".join(command[1:]))
                 else:
                     print("Please specify a keyword. Usage: search [priority] <keyword>")
 
@@ -278,13 +89,13 @@ def main():
                 if len(command) > 2:
                     try:
                         task_choice = int(command[1])
-                        if command[2].lower() in PRIORITY:
+                        if command[2].lower() in tasks.PRIORITY:
                             if len(command) == 3:
-                                edit_task(task_choice, command[2].lower())
+                                tasks.edit_task(task_choice, command[2].lower())
                             else:
-                                edit_task(task_choice, command[2].lower(), " ".join(command[3:]))
+                                tasks.edit_task(task_choice, command[2].lower(), " ".join(command[3:]))
                         else:
-                            edit_task(task_choice, new_task=" ".join(command[2:]))
+                            tasks.edit_task(task_choice, new_task=" ".join(command[2:]))
                     except ValueError:
                         print("Please enter a valid number.")
                 else:
@@ -293,7 +104,7 @@ def main():
             case "delete":
                 if len(command) > 1:
                     try:
-                        delete_task(int(command[1]))
+                        tasks.delete_task(int(command[1]))
                     except ValueError:
                         print("Please enter a valid number.")
                 else:
