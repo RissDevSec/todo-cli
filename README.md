@@ -103,12 +103,20 @@ Note: task numbers refer to their position in the sorted, grouped list — not t
 
 - Python 3 (standard library only — no external dependencies)
 
+The code is split into a small package (`modules/`) separating storage (reading/writing `tasks.json`), business logic (adding, editing, filtering tasks), and display (formatting output) from the command-line entry point in `main.py`.
+
 ## 📁 Project Structure
 
 ```
 todo-cli/
-├── main.py       # Main application logic
-├── tasks.json    # Local storage for tasks (auto-generated, gitignored)
+├── main.py              # Entry point: menu display and command parsing
+├── modules/
+│   ├── __init__.py
+│   ├── storage.py       # Reading/writing tasks.json
+│   ├── tasks.py         # Business logic: add, edit, delete, filter, search, due dates
+│   └── display.py       # Formatting and printing tasks to the terminal
+├── data/
+│   └── tasks.json       # Local storage for tasks (auto-generated, gitignored)
 ├── README.md
 └── LICENSE
 ```
