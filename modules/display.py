@@ -1,7 +1,12 @@
+"""Formatting and printing tasks to the terminal."""
+
 from datetime import datetime
 from collections import Counter
 
+
 def format_due_date(due_date_str, is_done):
+    """Build the '- due: YYYY-MM-DD' text for a task, adding an
+    OVERDUE flag if it's past due and not done yet."""
     if not due_date_str: return ""
     task_date = datetime.fromisoformat(due_date_str).date()
     today = datetime.today().date()
@@ -9,6 +14,8 @@ def format_due_date(due_date_str, is_done):
     return f"- due: {due_date_str}{overdue}"
 
 def group_tasks(tasks, title="Tasks:"):
+    """Print tasks grouped by priority, with a customizable heading
+    so search results can say things like "Tasks matching 'milk':"."""
     counts = Counter(task["priority"] for task in tasks.values())
     print(f"\n{title}")
     current_group = None

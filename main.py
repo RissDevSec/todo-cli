@@ -1,8 +1,11 @@
+"""Reads user input and dispatches each command to modules.tasks."""
+
 import os
 import sys
 import modules.tasks as tasks
 
 def show_menu():
+    """Print the list of available commands."""
     print("\ntodo-cli — a simple task manager\n")
     print("Commands:")
     print("  add [priority] <task>")
@@ -17,6 +20,7 @@ def show_menu():
     print("  exit")
 
 def main():
+    """Show the menu and keep reading commands until the user exits."""
     show_menu()
     while True:
         command = input("\n> ").strip().split()

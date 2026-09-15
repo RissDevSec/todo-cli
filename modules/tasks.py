@@ -1,3 +1,6 @@
+"""Business logic for the to-do list: add, edit, delete, filter,
+search, due dates, and marking tasks done."""
+
 import uuid
 from datetime import datetime
 from modules.storage import load_tasks, save_tasks
@@ -6,13 +9,21 @@ from modules.display import group_tasks
 PRIORITY = ["high", "medium", "low"]
 PRIORITY_ORDER = {"high": 0, "medium": 1, "low": 2}
 
+
 def tasks_exist():
+    """Load tasks, or print a message and return None if there aren't any."""
     tasks = load_tasks()
     if tasks: return tasks
     print("There are no tasks yet.")
     return None
 
 def get_sorted_tasks(tasks):
+    """Sort tasks by priority and number them 1, 2, 3...
+
+    The numbering happens here, before any filtering, so a task keeps
+    the same number whether you're looking at the full list or a
+    filtered/searched view of it.
+    """
     sorted_task = sorted(tasks, key=lambda t: PRIORITY_ORDER[t["priority"]])
     numbered_tasks = {}
     for index, task in enumerate(sorted_task, start=1):
@@ -20,24 +31,32 @@ def get_sorted_tasks(tasks):
     return numbered_tasks
 
 def find_task_by_id(tasks, task_id):
+    """Find a task's position in the raw list by its id."""
     for i, task in enumerate(tasks):
         if task["id"] == task_id:
             return i
     return None
 
 def find_index(tasks, task_choice):
+    """Turn a displayed task number back into its real position in
+    the raw list, so delete/edit/done still hit the right task even
+    after sorting or filtering."""
     sorted_tasks = get_sorted_tasks(tasks)
     if task_choice not in sorted_tasks: return None
     task_id = sorted_tasks[task_choice]["id"]
     return find_task_by_id(tasks, task_id)
 
 def resolve_task(tasks, task_choice):
+    """Look up a task by its displayed number, printing an error if
+    it doesn't exist."""
     index = find_index(tasks, task_choice)
     if index is None:
         print("Invalid task number.")
     return index
 
 def filter_tasks(tasks, filter_criteria):
+    """Filter by priority or done status. Doesn't print anything —
+    callers decide what to say if nothing matches."""
     if filter_criteria in PRIORITY:
         return {index: task for index, task in tasks.items() if task["priority"] == filter_criteria}
     elif filter_criteria == "done":
@@ -45,6 +64,7 @@ def filter_tasks(tasks, filter_criteria):
     return tasks
 
 def add_task(task, priority="medium"):
+    """Add a new task."""
     tasks = load_tasks()
     tasks.append({
         "id": str(uuid.uuid4()),
@@ -57,6 +77,7 @@ def add_task(task, priority="medium"):
     print(f"({priority.capitalize()}) '{task}' has been added.")
 
 def set_due_date(task_choice, date_str):
+    """Set or update a task's due date (expects YYYY-MM-DD)."""
     tasks = tasks_exist()
     if tasks is None: return
     index = resolve_task(tasks, task_choice)
@@ -72,6 +93,7 @@ def set_due_date(task_choice, date_str):
     print(f"'{task['task']}' is now due on {task['due_date']}.")
 
 def remove_due_date(task_choice):
+    """Clear a task's due date."""
     tasks = tasks_exist()
     if tasks is None: return
     index = resolve_task(tasks, task_choice)
@@ -85,6 +107,7 @@ def remove_due_date(task_choice):
     print(f"Due date for '{task['task']}' has been removed.")
 
 def mark_task_done(task_choice):
+    """Toggle a task between done and not done."""
     tasks = tasks_exist()
     if tasks is None: return
     index = resolve_task(tasks, task_choice)
@@ -96,6 +119,7 @@ def mark_task_done(task_choice):
     save_tasks(tasks)
 
 def list_tasks(filter_criteria=None):
+    """Print all tasks, optionally filtered by priority or done status."""
     tasks = tasks_exist()
     if tasks is None: return
 
@@ -112,6 +136,8 @@ def list_tasks(filter_criteria=None):
     group_tasks(filtered_tasks)
 
 def search_tasks(keyword, filter_criteria=None):
+    """Print tasks whose text contains keyword, optionally narrowed
+    down further by priority or done status."""
     tasks = tasks_exist()
     if tasks is None: return
     sorted_tasks = get_sorted_tasks(tasks)
@@ -137,6 +163,8 @@ def search_tasks(keyword, filter_criteria=None):
     group_tasks(filtered_tasks, title=title)
 
 def edit_task(task_choice, new_priority=None, new_task=None):
+    """Update a task's priority and/or text. Leave a field as None
+    to keep it unchanged."""
     tasks = tasks_exist()
     if tasks is None: return
     index = resolve_task(tasks, task_choice)
@@ -148,6 +176,7 @@ def edit_task(task_choice, new_priority=None, new_task=None):
     print(f"({task['priority'].capitalize()}) '{task['task']}' has been updated.")
 
 def delete_task(task_choice):
+    """Delete a task by its displayed number."""
     tasks = tasks_exist()
     if tasks is None: return
     index = resolve_task(tasks, task_choice)
