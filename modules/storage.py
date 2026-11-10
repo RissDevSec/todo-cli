@@ -11,9 +11,12 @@ def load_tasks():
     doesn't exist yet or is corrupted."""
     try:
         with open(TASKS_FILE, "r") as file:
-            return json.load(file)
+            data = json.load(file)
     except (FileNotFoundError, json.decoder.JSONDecodeError):
         return []
+    if not isinstance(data, list):
+        return []
+    return data
 
 def save_tasks(tasks):
     """Write the task list to disk, creating the data folder first if needed."""
